@@ -1,7 +1,10 @@
 export RESOURCE_GROUP_NAME="SimpleACRTasks"
 export RESOURCE_REGION="eastus"
+
+#ACR and Storage names must be globally unique
 export ACR_NAME="hashtagcyberregistry"
 export STORAGE_NAME="hashtagcyberstorage"
+
 export FOLDER_NAME="projectdata"
 export IDENTITY_NAME="storagebot"
 export TASK_NAME="hourlystoragerun"
@@ -28,11 +31,14 @@ az storage container create \
     --account-name $STORAGE_NAME
 
 # Create User Assigned Managed Identity
-az identity create -n $IDENITY_NAME -g $RESOURCE_GROUP_NAME
+az identity create -n $IDENTITY_NAME -g $RESOURCE_GROUP_NAME
 
 # Grant permissions to storage
 principalId=$(az identity show -n $IDENTITY_NAME -g $RESOURCE_GROUP_NAME --query principalId -otsv)
 storageId=$(az storage account show -n $STORAGE_NAME --query id -otsv)
+
+#Wait 10 seconds for the identity to be available for assignment
+sleep 10
 az role assignment create --assignee $principalId \
   --scope $storageId --role "Storage Blob Data Contributor"
 
@@ -51,13 +57,8 @@ echo -e "\n\nSetup Complete\n Next Steps:\n1. Connect docker using:\n\tdocker lo
 3. Tag your image for upload:\n\t docker tag $TASK_IMAGE $acrURL/$TASK_IMAGE
 4. Upload your image to ACR:\n\t docker push $acrURL/$TASK_IMAGE
 5. Return to this terminal and create your scheduled container run using:\n
-az acr task create --name $TASK_NAME --registry $ACR_NAME --cmd $acrURL/$TASK_IMAGE \\
+az acr task create --name $TASK_NAME --registry $ACR_NAME --cmd \"-e STORAGE_URL=$storageURL -e STORAGE_CONTAINER=$FOLDER_NAME -e FILE_BASENAME=$FILE_BASENAME $acrURL/$TASK_IMAGE\" \\
 \t--schedule \"$TASK_SCHEDULE\" --context /dev/null \\
-\t--assign-identity $roleIdentity \\
-\t--set STORAGE_URL=$storageURL --set STORAGE_CONTAINER=$FOLDER_NAME --set FILE_BASENAME=$FILE_BASENAME
+\t--assign-identity $roleIdentity
 \n\n Note: To run this task manually, execute the following command:
 \t az acr task run --name $TASK_NAME --registry $ACR_NAME\n\n"
-
-az acr task create --name hourlystoragerun --registry hashtagcyberregistry --cmd hashtagcyberregistry.azurecr.io/storagebot:0.1 \
-        --schedule "0 * * * *" --context /dev/null --assign-identity f4141e5c-57b9-484b-a213-968dd633f71a \
-        --set STORAGE_URL=https://hashtagcyberstorage.blob.core.windows.net/ --set STORAGE_CONTAINER=projectdata --set FILE_BASENAME=acr-test
