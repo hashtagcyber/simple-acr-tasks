@@ -3,10 +3,10 @@
 ## Simple ACR Tasks
 Most of my experience is in AWS, but recently I've had an increased need to learn Azure stuff... Lucky for me, the major cloud providers are all at near feature parity for the things I like to do. Unlucky for me, Azure doesn't have the same amount of blog posts and blueprints that say, "Enter these 5 commands to do that thing you want". This project aims to cover a pattern I tend to use a lot...
 
-1. Write a hacky script to get data and stuff it in S3 (Azure Storage)
+![1. Write a hacky script to get data and stuff it in S3 (Azure Storage)
 2. Throw it in a container
 3. Have the container run on a schedule
-4. Profit
+4. Profit](SimpleLogger.drawio.png)
 
 ## Preparing the Environment
 One thing I really do like about Azure is the cloud shell... Do you have a browser? You can run the Azure equivalent of "aws s3 ls" and "aws e2 describe-instances" from there, without having to install anything on your workstation. It's pretty cool.
